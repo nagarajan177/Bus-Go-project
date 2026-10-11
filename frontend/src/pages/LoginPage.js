@@ -47,6 +47,23 @@ function LoginPageInner() {
   const [capsLock, setCapsLock] = useState(false);
   const submitAttempted = useRef(false);
 
+  // Google's button only accepts a pixel width (100–400), not "100%".
+  // Measure the wrapper and pass that number instead.
+  const googleWrapRef = useRef(null);
+  const [googleWidth, setGoogleWidth] = useState(320);
+
+  useEffect(() => {
+    const measure = () => {
+      const w = googleWrapRef.current?.clientWidth;
+      if (!w) return;
+      const next = Math.max(200, Math.min(400, Math.floor(w)));
+      setGoogleWidth((prev) => (prev === next ? prev : next));
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
+
   useEffect(() => {
     if (submitAttempted.current) setErrors(runValidation(form));
   }, [form]);
@@ -504,11 +521,11 @@ function LoginPageInner() {
               {/* Social */}
               <div style={S.socialRow} className="anim-up-6 social-row-mobile">
                 {GOOGLE_CLIENT_ID ? (
-                  <div style={{ flex: 1, minWidth: 0, display: 'flex' }}>
+                  <div ref={googleWrapRef} style={{ flex: 1, minWidth: 0, display: 'flex' }}>
                     <GoogleLogin
                       onSuccess={handleGoogleSuccess}
                       onError={() => toast.error('Google sign-in failed')}
-                      width="100%"
+                      width={String(googleWidth)}
                       text="continue_with"
                       shape="rectangular"
                       theme="outline"
